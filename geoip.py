@@ -1,20 +1,25 @@
 #!/usr/bin/env python3.8
 
-""" Geo-locate IP (w/ optional IPv4 CLI argument) """
+""" Geo-locate IP (w/ optional IPv4/6 CLI argument) """
 
-import re
-import requests
 import sys
+from ipaddress import ip_address
 from xml.etree import ElementTree
 
-url = "https://freegeoip.app/xml/"
-ip4 = re.compile(r"\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}"
-                 r"(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b")
+import requests
 
-if ip := ip4.match(sys.argv[-1]):
-    url += ip.group()
+url = "https://freegeoip.app/xml/"
+
+if len(sys.argv) == 2:
+    ip = sys.argv[1]
+    try:
+        url += str(ip_address(ip))
+    except ValueError:
+        print(f'Invalid IP: "{ip}". Using your public IP...\n')
+    else:
+        print(f'Geo-locating address: {ip}\n')
 
 xml = ElementTree.fromstring(requests.get(url).content)
 
 for cell in xml:
-    print(f"{cell.tag}: {cell.text}")
+    print(f'{cell.tag}: {cell.text}')
